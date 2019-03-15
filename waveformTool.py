@@ -19,10 +19,10 @@ def plotChannelHits(waveform_data, UnsortedStartEnds, hit_triplet, channel, even
         if hit[1] > x_max:
             x_max = hit[1]
 
-    buf = len(waveform_data) - (x_max - x_min)
+    #  buf = len(waveform_data) - (x_max - x_min)
     buf = (x_max - x_min) / 2
-    min_range = x_min - int(2*buf)
-    max_range = x_max + int(2*buf)
+    min_range = x_min - int(buf)
+    max_range = x_max + int(buf)
     if min_range <= 0:
         min_range = 0
     if max_range >= 3072:
@@ -105,10 +105,10 @@ def plotChannelHits(waveform_data, UnsortedStartEnds, hit_triplet, channel, even
     #  time.sleep(5)
     if Type == "ROI":
         plt.title("ROI Hit Coloring for Channel " + str(channel))
-        plt.savefig("./hit_colored_images/hitColor_ev" + str(event) + "_ch" + str(channel) + ".pdf")
+        plt.savefig("./hit_colored_images/hitColor_ev" + str(event) + "_ch" + str(channel) + ".png")
     elif Type == "PIX":
         plt.title("Pixel Hit Coloring for Channel " + str(channel))
-        plt.savefig("./p_hit_colored_images/hitColor_ev" + str(event) + "_ch" + str(channel) + ".pdf")
+        plt.savefig("./p_hit_colored_images/hitColor_ev" + str(event) + "_ch" + str(channel) + ".png")
     plt.close()
     return
 
@@ -119,7 +119,8 @@ event_num = int(sys.argv[1])
 
 try:
     wavefile = ROOT.TFile.Open("./pixelHistos_{}.root".format(event_num))
-    hitfile = ROOT.TFile.Open("./event_{}.root".format(event_num)) 
+    #  hitfile = ROOT.TFile.Open("./event_{}.root".format(event_num)) 
+    hitfile = ROOT.TFile.Open("./what.root")
 except Exception as e:
     raise e
 
@@ -145,9 +146,6 @@ for event in pixlartree:
     for channel in event.sp_roiID:
         if channel not in gooberList:
             gooberList.append(channel)
-            #  print("========================================\n")
-            #  print "channel ", channel
-            #  print("\n========================================\n")
         else:
             continue
 
@@ -164,9 +162,11 @@ for event in pixlartree:
         for hit in xrange(num_hits):  #Loop over all of the hits in an event ( here we only have the one )
             #  We want to find and store unique ROI hit start and end times as well as the center value
             if event.sp_roiID[hit] == channel:
+                #  if event.sp_x[hit] > 24 and event.sp_x[hit] < 30:
+                #      print "Channel is ", channel
                 #  print("===================================================================================================================")
-                if channel == 40:
-                    print("**ROI**   Pos: {}   Cross: {}   Neg: {}".format(event.pos_peak_time_roi[hit], event.zero_cross_roi[hit], event.neg_peak_time_roi[hit]))
+                #  if channel == 40:
+                #      print("**ROI**   Pos: {}   Cross: {}   Neg: {}".format(event.pos_peak_time_roi[hit], event.zero_cross_roi[hit], event.neg_peak_time_roi[hit]))
                 #  print("**PIX**   Start: {}   Peak: {}   End: {}".format(event.start_tick_pix[hit], event.pos_peak_time_pix[hit], event.end_tick_pix[hit]))
                 boundary_pair = (event.start_tick_roi[hit], event.end_tick_roi[hit])
                 posPeak = (event.pos_peak_time_roi[hit], ROIhisto.GetBinContent(channel, event.pos_peak_time_roi[hit]+1))  # Time then value
@@ -187,9 +187,6 @@ for event in pixlartree:
     for pchannel in event.sp_pixelID:
         if pchannel not in pbooberList:
             pbooberList.append(pchannel)
-            #  print("========================================\n")
-            #  print "pchannel ", pchannel
-            #  print("\n========================================\n")
         else:
             continue
 
@@ -201,9 +198,14 @@ for event in pixlartree:
         for time_tick in xrange(1,3073):
             content = PIXhisto.GetBinContent(pchannel, time_tick)
             p_waveform_data.append(content)
-            
+
         for p_hit in xrange(num_hits):
             if event.sp_pixelID[p_hit] == pchannel:
+                if event.sp_x[p_hit] >= 23 and event.sp_x[p_hit] <= 30:
+                #  if event.sp_x[p_hit] <= 0:
+                #      print "Channel is ", pchannel, " and Rchannel is ", event.sp_roiID[p_hit]
+                    print "Channel is ", pchannel, " and peak time ", event.pos_peak_time_pix[p_hit], " and cross time is ", event.zero_cross_roi[p_hit]
+                    #  print " time diff ", event.pos_peak_time_pix[p_hit] - event.zero_cross_roi[p_hit]
                 p_boundary_pair = (event.start_tick_pix[p_hit], event.end_tick_pix[p_hit])
                 p_posPeak = (event.pos_peak_time_pix[p_hit], PIXhisto.GetBinContent(pchannel, event.pos_peak_time_pix[p_hit]+1))  # Time then value
                 pixStart = (p_boundary_pair[0], PIXhisto.GetBinContent(pchannel, p_boundary_pair[0]+1))
@@ -215,7 +217,7 @@ for event in pixlartree:
                     p_zipples.append(p_hit_triplet)  # Pos then neg
 
         #  Now we can plot it boi
-        #  plotChannelHits(p_waveform_data, p_startEnds, p_zipples, pchannel, event_num, "PIX")
+        plotChannelHits(p_waveform_data, p_startEnds, p_zipples, pchannel, event_num, "PIX")
 
 
 
